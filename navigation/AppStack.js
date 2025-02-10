@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
+import ForecastScreen from '../screens/ForecastScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -29,6 +30,8 @@ export default function AppStack() {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'Favorites') {
             iconName = focused ? 'heart' : 'heart-outline';
+          } else if (route.name === 'Forecast') {
+            iconName = focused ? 'calendar' : 'calendar-outline';
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -51,6 +54,11 @@ export default function AppStack() {
         name="Favorites" 
         component={FavoritesScreen} 
         options={{ title: 'Favoris' }}
+      />
+      <Tab.Screen 
+        name="Forecast" 
+        component={ForecastScreen} 
+        options={{ title: 'Prévisions' }}
       />
     </Tab.Navigator>
   );

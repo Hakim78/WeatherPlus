@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
+import locationService from '../services/locationService';
+import weatherService from '../services/weatherService';
 
 export default function HomeScreen() {
   const { logout } = useAuth();
@@ -10,9 +12,28 @@ export default function HomeScreen() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // après la logique pour obtenir la météo locale
-    setLoading(false);
+    fetchWeatherData();
   }, []);
+
+  const fetchWeatherData = async () => {
+    try {
+      // Obtenir la localisation
+      const location = await locationService.getCurrentLocation();
+      
+      // Obtenir la météo pour cette localisation
+      const weather = await weatherService.getWeatherByCoords(
+        location.latitude,
+        location.longitude
+      );
+      
+      setWeatherData(weather);
+    } catch (err) {
+      setError('Impossible de récupérer la météo');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -32,10 +53,31 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.weatherContainer}>
-        <Text style={styles.locationText}>Votre position</Text>
-        {/* plus tard l'affichage de la météo */}
-      </View>
+      {weatherData && (
+        <View style={styles.weatherContainer}>
+          <Text style={styles.locationText}>{weatherData.name}</Text>
+          <View style={styles.mainWeather}>
+            <Text style={styles.temperature}>
+              {Math.round(weatherData.main.temp)}°C
+            </Text>
+            <Text style={styles.description}>
+              {weatherData.weather[0].description}
+            </Text>
+          </View>
+          <View style={styles.details}>
+            <View style={styles.detailItem}>
+              <Ionicons name="water-outline" size={24} color="#666" />
+              <Text>{weatherData.main.humidity}%</Text>
+              <Text style={styles.detailLabel}>Humidité</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="speedometer-outline" size={24} color="#666" />
+              <Text>{weatherData.wind.speed} m/s</Text>
+              <Text style={styles.detailLabel}>Vent</Text>
+            </View>
+          </View>
+        </View>
+      )}
       <View style={styles.logoutContainer}>
         <Text style={styles.logoutButton} onPress={logout}>
           Se déconnecter
@@ -58,11 +100,41 @@ const styles = StyleSheet.create({
   weatherContainer: {
     flex: 1,
     padding: 20,
+    alignItems: 'center',
   },
   locationText: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+  },
+  mainWeather: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  temperature: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#f4511e',
+  },
+  description: {
+    fontSize: 20,
+    color: '#666',
+    textTransform: 'capitalize',
+  },
+  details: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  detailItem: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  detailLabel: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 4,
   },
   errorText: {
     color: 'red',

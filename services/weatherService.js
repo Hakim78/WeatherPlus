@@ -1,6 +1,6 @@
 // Anas ou Sarah il faudra configuer l'api key ect...
-const API_KEY = 'YOUR_API_KEY';
-const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+const API_KEY = '55ec4b68d7f64b81bf3134710251102';
+const BASE_URL = 'http://api.weatherapi.com/v1/current.json?key=';
 
 const weatherService = {
   // Obtenir la météo par coordonnées
@@ -20,10 +20,10 @@ const weatherService = {
   },
 
   // Obtenir la météo par nom de ville
-  getWeatherByCity: async (city) => {
+  getWeatherByCity: async (city) => {    
     try {
       const response = await fetch(
-        `${BASE_URL}/weather?q=${city}&units=metric&lang=fr&appid=${API_KEY}`
+        `${BASE_URL}${API_KEY}&q=${city}&aqi=yes`
       );
       const data = await response.json();
       if (response.ok) {

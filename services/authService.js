@@ -1,4 +1,5 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration de l'URL de base de ton API (modifie cette URL avec celle de ton backend)
 const API_URL = 'http://192.168.1.20:4000/user';  // Utilise ton propre serveur backend si nécessaire
@@ -7,15 +8,15 @@ const API_URL = 'http://192.168.1.20:4000/user';  // Utilise ton propre serveur 
 // Fonction login
 const login = async (email, password) => {
   try {
-    // Envoie de la requête POST pour la connexion
     const response = await axios.post(`${API_URL}/login`, { email, password });
-    
-    // Retourner un objet avec le token
-    return { token: response.data.token };
+    const token = response.data.token;
+    await AsyncStorage.setItem('token', token);
+    return { token };
   } catch (error) {
     throw new Error(error.response ? error.response.data.error : 'Erreur de connexion');
   }
 };
+
 
 // Fonction register
 const register = async (name, email, password) => {
@@ -23,8 +24,11 @@ const register = async (name, email, password) => {
     // Envoie de la requête POST pour l'inscription
     const response = await axios.post(`${API_URL}/register`, { name, email, password });
     
+    const token = response.data.token;
+    await AsyncStorage.setItem('token', token);
+    
     // Retourner un objet avec le token
-    return { token: response.data.token };
+    return { token };
   } catch (error) {
     throw new Error(error.response ? error.response.data.error : 'Erreur d\'inscription');
   }

@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { Alert } from 'react-native';
 import * as authService from '../services/authService';
 import * as storageService from '../services/storageService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
 
@@ -16,9 +17,9 @@ export const AuthProvider = ({ children }) => {
   const loadToken = async () => {
     try {
       // Effacer d'abord le token pour les tests
-      await storageService.removeToken();
+      await AsyncStorage.removeItem('token');
       
-      const storedToken = await storageService.getToken();
+      const storedToken = await AsyncStorage.getItem('token');
       if (storedToken) {
         try {
           // Vérifier si le token est valide avec le backend
@@ -26,17 +27,17 @@ export const AuthProvider = ({ children }) => {
           if (response.valid) {
             setToken(storedToken);
           } else {
-            await storageService.removeToken();
+            await AsyncStorage.removeItem('token');
             setToken(null);
           }
         } catch (error) {
-          await storageService.removeToken();
+          await AsyncStorage.removeItem('token');
           setToken(null);
         }
       }
     } catch (error) {
       console.error('Error loading token:', error);
-      await storageService.removeToken();
+      await AsyncStorage.removeItem('token');
       setToken(null);
     } finally {
       setIsLoading(false);
@@ -45,10 +46,10 @@ export const AuthProvider = ({ children }) => {
 
   const handleToken = async (token) => {
     if (token) {
-      await storageService.storeToken(token);
+      await AsyncStorage.setItem('token', token);
       setToken(token);
     } else {
-      await storageService.removeToken();
+      await AsyncStorage.removeItem('token');
       setToken(null);
     }
   };
@@ -79,9 +80,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const currentToken = await storageService.getToken();
+      const currentToken = await AsyncStorage.getItem('token');;
       if (currentToken) {
-        await storageService.removeToken();
+        await AsyncStorage.removeItem('token');
         setToken(null);
       }
     } catch (error) {

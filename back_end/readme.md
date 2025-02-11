@@ -29,14 +29,14 @@ GATEWAY_PORT=4000
 Enfin, il faut lancer chaque service dans des consoles séparées pour qu'ils tournent en parallèle :
 
 - cd user-service
-- npm start
+- nodemon start
 
 
 - cd favoris-service
-- npm start
+- nodemon start
 
 
 - cd api_getway
-- npm start
+- nodemon start
 
 Avec notre getway, tout nos services tournes sur le même port (défini dans le fichier .env de api_getway).

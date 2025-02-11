@@ -1,14 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, StyleSheet, FlatList, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import weatherService from '../services/weatherService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import favoriteService from '../services/favoriteService';
+
+
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [weatherData, setWeatherData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  const loadFavorites = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      console.log("Token récupéré:", token);
+
+      const favorites = await favoriteService.listFavorites(token);
+      setFavorites(favorites);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -28,26 +48,41 @@ export default function SearchScreen() {
 
   const addToFavorites = async () => {
     try {
-      const favorites = await AsyncStorage.getItem('favorites');
-      const favoritesArray = favorites ? JSON.parse(favorites) : [];
-      
-      // Vérifier si la ville est déjà dans les favoris
-      if (!favoritesArray.some(fav => fav.id === weatherData.id)) {
-        const newFavorite = {
-          id: weatherData.id,
-          name: weatherData.name,
-          // city: weatherData.name,
-        };
-        
-        const newFavorites = [...favoritesArray, newFavorite];
-        await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        alert('Vous devez être connecté pour ajouter aux favoris');
+        return;
+      }
+
+      const favorite = {
+        id_ville: weatherData.location.name,
+        nom_ville: weatherData.location.name,
+      };
+
+      await favoriteService.addFavorite(favorite, token);
+      if (favorite.id_ville) {
         alert('Ville ajoutée aux favoris');
-      } else {
-        alert('Cette ville est déjà dans vos favoris');
       }
     } catch (error) {
       console.error('Erreur lors de l\'ajout aux favoris:', error);
       alert('Erreur lors de l\'ajout aux favoris');
+    }
+  };
+
+  const deleteFromFavorites = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        alert('Vous devez être connecté pour supprimer des favoris');
+        return;
+      }
+
+      const favorite = favorites.find((favorite) => favorite.id_ville === weatherData.location.name);
+      await favoriteService.deleteFavorite(favorite.id_ville, token);
+      alert('Ville supprimée des favoris');
+    } catch (error) {
+      console.error('Erreur lors de la suppression des favoris:', error);
+      alert('Erreur lors de la suppression des favoris');
     }
   };
 
@@ -83,9 +118,23 @@ export default function SearchScreen() {
       <Text style={styles.cityName}>
         {weatherData.location.name}, {weatherData.location.country}
       </Text>
-      <TouchableOpacity onPress={addToFavorites}>
+
+      {/* Si la ville est dans les favoris, afficher le bouton de suppression */}
+      {favorites.find((favorite) => favorite.id_ville === weatherData.location.name) && (
+        <TouchableOpacity onPress={deleteFromFavorites}>
+          <Ionicons name="heart" size={24} color="#f4511e"/>
+        </TouchableOpacity>
+      )}
+
+      {/* Sinon, afficher le bouton d'ajout */}
+      {!favorites.find((favorite) => favorite.id_ville === weatherData.location.name) && (
+        <TouchableOpacity onPress={addToFavorites}>
+          <Ionicons name="heart-outline" size={24} color="#f4511e" />
+        </TouchableOpacity>
+      )}
+      {/* <TouchableOpacity onPress={addToFavorites}>
         <Ionicons name="heart-outline" size={24} color="#f4511e" />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
 
     <Text style={styles.temperature}>

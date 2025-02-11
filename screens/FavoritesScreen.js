@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import favoriteService from '../services/favoriteService';
 import weatherService from '../services/weatherService';
 
 export default function FavoritesScreen() {
@@ -13,13 +14,17 @@ export default function FavoritesScreen() {
     loadFavorites();
   }, []);
 
+  
   const loadFavorites = async () => {
     try {
-      const storedFavorites = await AsyncStorage.getItem('favorites');
-      if (storedFavorites) {
-        const favoritesArray = JSON.parse(storedFavorites);
-        setFavorites(favoritesArray);
-        await updateWeatherData(favoritesArray);
+      const token = await AsyncStorage.getItem('token');
+      console.log("Token récupéré:", token);
+
+      const favoritesFromBackend = await favoriteService.listFavorites(token);
+      if (favoritesFromBackend) {
+        setFavorites(favoritesFromBackend);
+        
+        await updateWeatherData(favoritesFromBackend);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des favoris:', error);
@@ -33,10 +38,11 @@ export default function FavoritesScreen() {
     const weatherUpdates = {};
     for (const city of favoritesArray) {
       try {
-        const weather = await weatherService.getWeatherByCity(city.name);
-        weatherUpdates[city.id] = weather;
+        // Utilisation du nom de ville stocké dans "nom_ville"
+        const weather = await weatherService.getWeatherByCity(city.nom_ville);
+        weatherUpdates[city.id_ville] = weather;
       } catch (error) {
-        console.error(`Erreur pour ${city.name}:`, error);
+        console.error(`Erreur pour ${city.nom_ville}:`, error);
       }
     }
     setWeatherData(weatherUpdates);
@@ -44,8 +50,9 @@ export default function FavoritesScreen() {
 
   const removeFavorite = async (cityId) => {
     try {
-      const updatedFavorites = favorites.filter(city => city.id !== cityId);
-      await AsyncStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      const token = await AsyncStorage.getItem('token');
+      await favoriteService.deleteFavorite(cityId, token);
+      const updatedFavorites = favorites.filter(city => city.id_ville !== cityId);
       setFavorites(updatedFavorites);
       
       // Supprimer les données météo associées
@@ -59,27 +66,28 @@ export default function FavoritesScreen() {
   };
 
   const refreshWeather = async () => {
-    setLoading(true);
+    loadFavorites();
     await updateWeatherData(favorites);
-    setLoading(false);
   };
 
   const renderWeatherCard = ({ item }) => {
-    const weather = weatherData[item.id];
+    const weather = weatherData[item.id_ville];
     if (!weather) return null;
 
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.cityName}>{item.name}, {item.country}</Text>
+          <Text style={styles.cityName}>
+            {item.nom_ville}{weather.location && weather.location.country ? `, ${weather.location.country}` : ''}
+          </Text>
           <TouchableOpacity 
             onPress={() => {
               Alert.alert(
                 'Supprimer des favoris',
-                `Voulez-vous supprimer ${item.name} des favoris ?`,
+                `Voulez-vous supprimer ${item.nom_ville} des favoris ?`,
                 [
                   { text: 'Annuler', style: 'cancel' },
-                  { text: 'Supprimer', onPress: () => removeFavorite(item.id), style: 'destructive' }
+                  { text: 'Supprimer', onPress: () => removeFavorite(item.id_ville), style: 'destructive' }
                 ]
               );
             }}
@@ -90,21 +98,21 @@ export default function FavoritesScreen() {
 
         <View style={styles.weatherInfo}>
           <Text style={styles.temperature}>
-            {Math.round(weather.main.temp)}°C
+            {Math.round(weather.current.temp_c)}°C
           </Text>
           <Text style={styles.description}>
-            {weather.weather[0].description}
+            {weather.current.condition.text}
           </Text>
         </View>
 
         <View style={styles.details}>
           <View style={styles.detailItem}>
             <Ionicons name="water-outline" size={20} color="#666" />
-            <Text style={styles.detailText}>{weather.main.humidity}%</Text>
+            <Text style={styles.detailText}>{weather.current.humidity}%</Text>
           </View>
           <View style={styles.detailItem}>
             <Ionicons name="speedometer-outline" size={20} color="#666" />
-            <Text style={styles.detailText}>{weather.wind.speed} m/s</Text>
+            <Text style={styles.detailText}>{weather.current.wind_kph} km/h</Text>
           </View>
         </View>
       </View>
@@ -142,7 +150,7 @@ export default function FavoritesScreen() {
           <FlatList
             data={favorites}
             renderItem={renderWeatherCard}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.id_ville.toString()}
             contentContainerStyle={styles.list}
           />
         </>

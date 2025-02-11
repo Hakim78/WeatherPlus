@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import weatherService from '../services/weatherService';
 import locationService from '../services/locationService';
 
@@ -15,105 +16,132 @@ export default function ForecastScreen() {
 
   const fetchForecast = async () => {
     try {
-      // Obtenir la localisation actuelle
       const location = await locationService.getCurrentLocation();
-      
-      // Obtenir les prévisions pour cette localisation
       const forecastData = await weatherService.getForecast(
         location.latitude,
         location.longitude
       );
       
-      // Organiser les données par jour
-      const dailyForecast = groupForecastByDay(forecastData.list);
-      setForecast(dailyForecast);
+      // Vérification des données et meilleure gestion des erreurs
+      if (forecastData && forecastData.forecast && Array.isArray(forecastData.forecast.forecastday)) {
+        setForecast(forecastData.forecast.forecastday);
+        setError(null);
+      } else {
+        console.log('Forecast Data Structure:', forecastData); // Pour debug
+        throw new Error('Format de données invalide');
+      }
     } catch (err) {
       setError('Impossible de récupérer les prévisions');
-      console.error(err);
+      console.error('Erreur détaillée:', err);
+      setForecast(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const groupForecastByDay = (list) => {
-    const grouped = {};
-    list.forEach(item => {
-      const date = new Date(item.dt * 1000);
-      const day = date.toLocaleDateString();
-      if (!grouped[day]) {
-        grouped[day] = [];
-      }
-      grouped[day].push(item);
-    });
-    return grouped;
-  };
-
-  const getWeatherIcon = (condition) => {
-    switch (condition) {
-      case 'Clear': return 'sunny';
-      case 'Clouds': return 'cloudy';
-      case 'Rain': return 'rainy';
-      case 'Snow': return 'snow';
-      default: return 'partly-sunny';
-    }
-  };
-
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#f4511e" />
-      </View>
+      <LinearGradient
+        colors={['#f4511e', '#ff8c00']}
+        style={styles.centerContainer}
+      >
+        <ActivityIndicator size="large" color="#fff" />
+      </LinearGradient>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
+      <LinearGradient
+        colors={['#f4511e', '#ff8c00']}
+        style={styles.centerContainer}
+      >
+        <Ionicons name="cloud-offline-outline" size={50} color="#fff" />
         <Text style={styles.errorText}>{error}</Text>
-      </View>
+      </LinearGradient>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {forecast && Object.entries(forecast).map(([day, dayForecast], index) => (
-        <View key={day} style={styles.dayContainer}>
-          <Text style={styles.dayTitle}>
-            {index === 0 ? "Aujourd'hui" : new Date(day).toLocaleDateString('fr-FR', { weekday: 'long' })}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {dayForecast.map((item, idx) => (
-              <View key={idx} style={styles.hourForecast}>
-                <Text style={styles.hourText}>
-                  {new Date(item.dt * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-                <Ionicons 
-                  name={getWeatherIcon(item.weather[0].main)} 
-                  size={24} 
-                  color="#f4511e" 
-                />
-                <Text style={styles.temperature}>{Math.round(item.main.temp)}°C</Text>
-                <View style={styles.details}>
-                  <Text style={styles.detailText}>{item.main.humidity}%</Text>
-                  <Ionicons name="water-outline" size={12} color="#666" />
-                </View>
-                <View style={styles.details}>
-                  <Text style={styles.detailText}>{item.wind.speed}m/s</Text>
-                  <Ionicons name="speedometer-outline" size={12} color="#666" />
-                </View>
+    <LinearGradient
+      colors={['#f4511e', '#ff8c00']}
+      style={styles.gradientBackground}
+    >
+      <ScrollView style={styles.container}>
+        {forecast && forecast.map((day, index) => (
+          <View key={day.date} style={styles.dayCard}>
+            <View style={styles.dayHeader}>
+              <Text style={styles.dayTitle}>
+                {index === 0 
+                  ? "Aujourd'hui" 
+                  : new Date(day.date).toLocaleDateString('fr-FR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long'
+                    })}
+              </Text>
+            </View>
+
+            <View style={styles.dailySummary}>
+              <Ionicons
+                name={day.day.condition.text.toLowerCase().includes('rain') ? 'rainy' : 'sunny'}
+                size={40}
+                color="#f4511e"
+              />
+              <View style={styles.tempRange}>
+                <Text style={styles.maxTemp}>{Math.round(day.day.maxtemp_c)}°C</Text>
+                <Text style={styles.minTemp}>{Math.round(day.day.mintemp_c)}°C</Text>
               </View>
-            ))}
-          </ScrollView>
-        </View>
-      ))}
-    </ScrollView>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hourScroll}>
+              {day.hour.map((hour, idx) => (
+                <View key={idx} style={styles.hourCard}>
+                  <Text style={styles.hourText}>
+                    {new Date(hour.time).toLocaleTimeString('fr-FR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Text>
+                  <Text style={styles.temperature}>{Math.round(hour.temp_c)}°C</Text>
+                  
+                  <View style={styles.details}>
+                    <Ionicons name="water-outline" size={14} color="#666" />
+                    <Text style={styles.detailText}>{hour.humidity}%</Text>
+                  </View>
+
+                  <View style={styles.details}>
+                    <Ionicons name="speedometer-outline" size={14} color="#666" />
+                    <Text style={styles.detailText}>{hour.wind_kph} km/h</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.additionalInfo}>
+              <View style={styles.infoRow}>
+                <Ionicons name="water" size={16} color="#666" />
+                <Text style={styles.infoText}>Précipitations: {day.day.daily_chance_of_rain}%</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Ionicons name="thermometer" size={16} color="#666" />
+                <Text style={styles.infoText}>Ressenti max: {Math.round(day.day.maxtemp_c)}°C</Text>
+              </View>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradientBackground: {
+    flex: 1
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    paddingVertical: 10,
   },
   centerContainer: {
     flex: 1,
@@ -121,35 +149,78 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   errorText: {
-    color: 'red',
+    color: '#fff',
     fontSize: 16,
+    marginTop: 10,
   },
-  dayContainer: {
+  dayCard: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    marginHorizontal: 15,
+    marginBottom: 15,
+    borderRadius: 15,
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    elevation: 3
+  },
+  dayHeader: {
+    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#f4511e',
+    paddingLeft: 10,
   },
   dayTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 10,
     textTransform: 'capitalize',
+    color: '#333'
   },
-  hourForecast: {
-    backgroundColor: '#f5f5f5',
+  dailySummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 15,
+  },
+  tempRange: {
+    alignItems: 'flex-end',
+  },
+  maxTemp: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#f4511e',
+  },
+  minTemp: {
+    fontSize: 18,
+    color: '#666',
+  },
+  hourScroll: {
+    marginBottom: 15,
+  },
+  hourCard: {
+    width: 90,
+    backgroundColor: '#fff',
     borderRadius: 10,
-    padding: 15,
     marginRight: 10,
     alignItems: 'center',
-    minWidth: 100,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 1, height: 2 },
+    shadowRadius: 3,
+    elevation: 2
   },
   hourText: {
     fontSize: 14,
+    color: '#333',
     marginBottom: 5,
   },
   temperature: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
+    color: '#f4511e',
     marginVertical: 5,
   },
   details: {
@@ -159,7 +230,22 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    marginRight: 3,
     color: '#666',
+    marginLeft: 3,
+  },
+  additionalInfo: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 15,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 8,
   },
 });

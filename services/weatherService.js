@@ -1,14 +1,13 @@
-// Anas ou Sarah il faudra configuer l'api key ect...
 const API_KEY = '55ec4b68d7f64b81bf3134710251102';
-const BASE_URL = 'http://api.weatherapi.com/v1/current.json?key=';
+const BASE_URL = 'http://api.weatherapi.com/v1';
 
 const weatherService = {
   // Obtenir la météo par coordonnées
   getWeatherByCoords: async (lat, lon) => {
     try {
-        const response = await fetch(
-            `${BASE_URL}${API_KEY}&q=${lat},${lon}&aqi=yes`
-          );
+      const response = await fetch(
+        `${BASE_URL}/current.json?key=${API_KEY}&q=${lat},${lon}&aqi=yes`
+      );
       const data = await response.json();
       if (response.ok) {
         return data;
@@ -19,12 +18,11 @@ const weatherService = {
     }
   },
 
-
   // Obtenir la météo par nom de ville
   getWeatherByCity: async (city) => {    
     try {
       const response = await fetch(
-        `${BASE_URL}${API_KEY}&q=${city}&aqi=yes`
+        `${BASE_URL}/current.json?key=${API_KEY}&q=${city}&aqi=yes`
       );
       const data = await response.json();
       if (response.ok) {
@@ -40,14 +38,18 @@ const weatherService = {
   getForecast: async (lat, lon) => {
     try {
       const response = await fetch(
-        `${BASE_URL}/forecast?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${API_KEY}`
+        `${BASE_URL}/forecast.json?key=${API_KEY}&q=${lat},${lon}&days=5&aqi=no&lang=fr`
       );
       const data = await response.json();
-      if (response.ok) {
-        return data;
+      
+      console.log('Forecast API Response:', data); // Pour debug
+      
+      if (!response.ok) {
+        throw new Error(data.error ? data.error.message : "Erreur inconnue");
       }
-      throw new Error(data.message);
+      return data;
     } catch (error) {
+      console.error('Forecast Error:', error);
       throw error;
     }
   }

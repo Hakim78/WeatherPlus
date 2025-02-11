@@ -36,7 +36,7 @@ export default function SearchScreen() {
         const newFavorite = {
           id: weatherData.id,
           name: weatherData.name,
-          country: weatherData.sys.country
+          // city: weatherData.name,
         };
         
         const newFavorites = [...favoritesArray, newFavorite];
@@ -77,38 +77,38 @@ export default function SearchScreen() {
         </View>
       )}
 
-      {weatherData && (
-        <View style={styles.weatherContainer}>
-          <View style={styles.weatherHeader}>
-            <Text style={styles.cityName}>
-              {weatherData.name}, {weatherData.sys.country}
-            </Text>
-            <TouchableOpacity onPress={addToFavorites}>
-              <Ionicons name="heart-outline" size={24} color="#f4511e" />
-            </TouchableOpacity>
-          </View>
+{weatherData && (
+  <View style={styles.weatherContainer}>
+    <View style={styles.weatherHeader}>
+      <Text style={styles.cityName}>
+        {weatherData.location.name}, {weatherData.location.country}
+      </Text>
+      <TouchableOpacity onPress={addToFavorites}>
+        <Ionicons name="heart-outline" size={24} color="#f4511e" />
+      </TouchableOpacity>
+    </View>
 
-          <Text style={styles.temperature}>
-            {Math.round(weatherData.main.temp)}°C
-          </Text>
-          <Text style={styles.description}>
-            {weatherData.weather[0].description}
-          </Text>
+    <Text style={styles.temperature}>
+      {Math.round(weatherData.current.temp_c)}°C
+    </Text>
+    <Text style={styles.description}>
+      {weatherData.current.condition.text}
+    </Text>
 
-          <View style={styles.details}>
-            <View style={styles.detailItem}>
-              <Ionicons name="water-outline" size={24} color="#666" />
-              <Text>{weatherData.main.humidity}%</Text>
-              <Text style={styles.detailLabel}>Humidité</Text>
-            </View>
-            <View style={styles.detailItem}>
-              <Ionicons name="speedometer-outline" size={24} color="#666" />
-              <Text>{weatherData.wind.speed} m/s</Text>
-              <Text style={styles.detailLabel}>Vent</Text>
-            </View>
-          </View>
-        </View>
-      )}
+    <View style={styles.details}>
+      <View style={styles.detailItem}>
+        <Ionicons name="water-outline" size={24} color="#666" />
+        <Text>{weatherData.current.humidity}%</Text>
+        <Text style={styles.detailLabel}>Humidité</Text>
+      </View>
+      <View style={styles.detailItem}>
+        <Ionicons name="speedometer-outline" size={24} color="#666" />
+        <Text>{weatherData.current.wind_kph} km/h</Text>
+        <Text style={styles.detailLabel}>Vent</Text>
+      </View>
+    </View>
+  </View>
+)}
     </View>
   );
 }

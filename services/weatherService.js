@@ -29,7 +29,7 @@ const weatherService = {
       if (response.ok) {
         return data;
       }
-      throw new Error(data.message);
+      throw new Error(data.error ? data.error.message : "Erreur inconnue");
     } catch (error) {
       throw error;
     }

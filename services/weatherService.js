@@ -6,9 +6,9 @@ const weatherService = {
   // Obtenir la météo par coordonnées
   getWeatherByCoords: async (lat, lon) => {
     try {
-      const response = await fetch(
-        `${BASE_URL}/weather?lat=${lat}&lon=${lon}&units=metric&lang=fr&appid=${API_KEY}`
-      );
+        const response = await fetch(
+            `${BASE_URL}${API_KEY}&q=${lat},${lon}&aqi=yes`
+          );
       const data = await response.json();
       if (response.ok) {
         return data;
@@ -18,6 +18,7 @@ const weatherService = {
       throw error;
     }
   },
+
 
   // Obtenir la météo par nom de ville
   getWeatherByCity: async (city) => {    

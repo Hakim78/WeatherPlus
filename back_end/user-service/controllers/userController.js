@@ -23,7 +23,14 @@ const registerUser = async (req, res) => {
 
     await user.save();
 
-    res.status(201).send(user);
+    const token = jwt.sign(
+      {id: user._id, email: user.email},
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    )
+
+    res.status(201).send({message: "Inscription réussie", user, token});
+    console.log({message: "Inscription réussie", user, token})
   } catch (error) {
     res.status(400).send({ error: error.message });
   }

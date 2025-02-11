@@ -14,12 +14,29 @@ export const AuthProvider = ({ children }) => {
 
   const loadToken = async () => {
     try {
+      // Effacer d'abord le token pour les tests
+      await storageService.removeToken();
+      
       const storedToken = await storageService.getToken();
       if (storedToken) {
-        setToken(storedToken);
+        try {
+          // Vérifier si le token est valide avec le backend
+          const response = await authService.verifyToken(storedToken);
+          if (response.valid) {
+            setToken(storedToken);
+          } else {
+            await storageService.removeToken();
+            setToken(null);
+          }
+        } catch (error) {
+          await storageService.removeToken();
+          setToken(null);
+        }
       }
     } catch (error) {
       console.error('Error loading token:', error);
+      await storageService.removeToken();
+      setToken(null);
     } finally {
       setIsLoading(false);
     }
@@ -28,8 +45,12 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      await storageService.storeToken(response.token);
-      setToken(response.token);
+      if (response.token) {
+        await storageService.storeToken(response.token);
+        setToken(response.token);
+      } else {
+        throw new Error('No token received');
+      }
     } catch (error) {
       throw error;
     }
@@ -38,8 +59,10 @@ export const AuthProvider = ({ children }) => {
   const register = async (email, password, username) => {
     try {
       const response = await authService.register(email, password, username);
-      await storageService.storeToken(response.token);
-      setToken(response.token);
+      if (response.token) {
+        await storageService.storeToken(response.token);
+        setToken(response.token);
+      }
     } catch (error) {
       throw error;
     }

@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { Alert } from 'react-native';
 import * as authService from '../services/authService';
 import * as storageService from '../services/storageService';
 
@@ -42,27 +43,35 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleToken = async (token) => {
+    if (token) {
+      await storageService.storeToken(token);
+      setToken(token);
+    } else {
+      await storageService.removeToken();
+      setToken(null);
+    }
+  };
+  
+
   const login = async (email, password) => {
     try {
       const response = await authService.login(email, password);
-      if (response.token) {
-        await storageService.storeToken(response.token);
-        setToken(response.token);
-      } else {
-        throw new Error('No token received');
-      }
+      await handleToken(response.token);
     } catch (error) {
       throw error;
     }
   };
+  
 
-  const register = async (email, password, username) => {
+  const register = async (email, password, name) => {
+    if (!email || !password || !name) {
+      Alert.alert('Error', 'Merci de remplir tous les champs.');
+      return;
+    }
     try {
-      const response = await authService.register(email, password, username);
-      if (response.token) {
-        await storageService.storeToken(response.token);
-        setToken(response.token);
-      }
+      const response = await authService.register(email, password, name);
+      await handleToken(response.token);
     } catch (error) {
       throw error;
     }
@@ -70,12 +79,15 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await storageService.removeToken();
-      setToken(null);
+      const currentToken = await storageService.getToken();
+      if (currentToken) {
+        await storageService.removeToken();
+        setToken(null);
+      }
     } catch (error) {
       console.error('Error during logout:', error);
     }
-  };
+  };  
 
   return (
     <AuthContext.Provider value={{ token, isLoading, login, logout, register }}>

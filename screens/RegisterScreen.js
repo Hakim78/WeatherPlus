@@ -15,15 +15,16 @@ import { Ionicons } from '@expo/vector-icons';
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { register } = useAuth();
 
   const handleRegister = async () => {
     try {
-      await register(email, password, username);
+      await register(name, email, password);
+      navigation.navigate('Home');
     } catch (error) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Erreur : ' + error.message);
     }
   };
 
@@ -44,11 +45,12 @@ export default function RegisterScreen({ navigation }) {
           <Ionicons name="person-outline" size={20} color="#666" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Username"
-            value={username}
-            onChangeText={setUsername}
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
             autoCapitalize="none"
             placeholderTextColor="#666"
+            name="name"
           />
         </View>
 
@@ -62,6 +64,7 @@ export default function RegisterScreen({ navigation }) {
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#666"
+            name="email"
           />
         </View>
 
@@ -74,6 +77,7 @@ export default function RegisterScreen({ navigation }) {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             placeholderTextColor="#666"
+            name="password"
           />
           <TouchableOpacity 
             onPress={() => setShowPassword(!showPassword)}

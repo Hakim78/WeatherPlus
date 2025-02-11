@@ -1,84 +1,45 @@
-// const login = async (email, password) => {
-//     if (email === 'test@example.com' && password === 'password') {
-//       return { token: 'fake-auth-token-123' };
-//     }
-//     throw new Error('Invalid credentials');
-//   };
-  
-//   const register = async (email, password, username) => {
-//     return { token: 'fake-auth-token-123' };
-//   };
-  
-//   export { login, register };
+import axios from 'axios';
 
+// Configuration de l'URL de base de ton API (modifie cette URL avec celle de ton backend)
+const API_URL = 'http://192.168.1.20:4000/user';  // Utilise ton propre serveur backend si nécessaire
+// const API_URL = 'http://172.20.10.7:4000/user';  // IP Hackim
 
-// services/authService.js
-const API_URL = 'http://172.20.10.7:4000/user';
-
+// Fonction login
 const login = async (email, password) => {
   try {
-    const response = await fetch(`${API_URL}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
-    return data;
+    // Envoie de la requête POST pour la connexion
+    const response = await axios.post(`${API_URL}/login`, { email, password });
+    
+    // Retourner le token récupéré dans la réponse
+    return response.data.token;
   } catch (error) {
-    throw error;
+    throw new Error(error.response ? error.response.data.error : 'Erreur de connexion');
   }
 };
 
-const register = async (email, password, username) => {
+// Fonction register
+const register = async (name, email, password) => {
   try {
-    const response = await fetch(`${API_URL}/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        email, 
-        password,
-        name: username 
-      }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
-    return data;
+    // Envoie de la requête POST pour l'inscription
+    const response = await axios.post(`${API_URL}/register`, { name, email, password });
+    
+    // Retourner le token récupéré dans la réponse
+    return response.data.token;
   } catch (error) {
-    throw error;
+    throw new Error(error.response ? error.response.data.error : 'Erreur d\'inscription');
   }
 };
 
-const verifyToken = async (token) => {
+const myUser = async () => {
   try {
-    const response = await fetch(`${API_URL}/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      return { valid: false };
-    }
-
-    const data = await response.json();
-    return { valid: true, user: data };
+    // Envoie de la requête GET pour récupérer l'utilisateur connecté
+    const response = await axios.get(`${API_URL}/me`);
+    
+    // Retourner l'utilisateur récupéré dans la réponse
+    return response.data;
   } catch (error) {
-    console.error('Token verification error:', error);
-    return { valid: false };
+    throw new Error(error.response ? error.response.data.error : 'Erreur lors de la récupération de l\'utilisateur');
   }
 };
 
-export { login, register, verifyToken };
+export { login, register, myUser };

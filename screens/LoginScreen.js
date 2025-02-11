@@ -19,12 +19,20 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    try {
-      await login(email, password);
-    } catch (error) {
-      Alert.alert('Error', error.message);
+    if (!email || !password) {
+      Alert.alert('Error', 'Merci de remplir tous les champs.');
+      return;
     }
-  };
+  
+    try {
+      const token = await login(email, password);
+      if (token) {
+        navigation.navigate('Home');
+      }
+    } catch (error) {
+      Alert.alert('Erreur', error.message);
+    }
+  };  
 
   return (
     <KeyboardAvoidingView 
@@ -49,6 +57,7 @@ export default function LoginScreen({ navigation }) {
             keyboardType="email-address"
             autoCapitalize="none"
             placeholderTextColor="#666"
+            name="email"
           />
         </View>
 
@@ -61,6 +70,7 @@ export default function LoginScreen({ navigation }) {
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
             placeholderTextColor="#666"
+            name="password"
           />
           <TouchableOpacity 
             onPress={() => setShowPassword(!showPassword)}

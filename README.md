@@ -1,3 +1,17 @@
+# WeatherPlus
+
+# Avant de lancer le projet.
+
+- Lancer mongodb compass afin que le backend puisse créer la BDD & fonctionner
+
+- Lancer chaque microservices (voir readme dans le dossier backend)
+
+- Installer les packages npm dans le frontend
+
+- Mettre votre IPV4 dans la variable BASE_URL dans les fichiers authService.js et favoriteService.js
+
+- Lancer le frontend
+
 # Welcome to your Expo app 👋
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).

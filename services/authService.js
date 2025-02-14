@@ -2,8 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Configuration de l'URL de base de ton API (modifie cette URL avec celle de ton backend)
-const API_URL = 'http://192.168.1.20:4000/user';  // Utilise ton propre serveur backend si nécessaire
-// const API_URL = 'http://172.20.10.7:4000/user';  // IP Hakim
+const API_URL = 'http://IPV4_ICI:4000/user';  // Utilise ton propre serveur backend si nécessaire
 
 // Fonction login
 const login = async (email, password) => {

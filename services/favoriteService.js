@@ -1,4 +1,4 @@
-const BASE_URL = 'http://192.168.1.20:4000/favoris';
+const BASE_URL = 'http://IPV4_ICI:4000/favoris';
 
 const favoriteService = {
   // Récupérer la liste des favoris de l'utilisateur
